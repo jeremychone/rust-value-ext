@@ -1,3 +1,4 @@
+use crate::AsType;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::{json, Map, Value};
@@ -58,9 +59,14 @@ use std::collections::VecDeque;
 pub trait JsonValueExt {
 	fn x_new_object() -> Value;
 
-	/// Returns a value of type `T` for a given name or pointer path.
+	/// Returns an owned type `T` for a given name or pointer path.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get<T: DeserializeOwned>(&self, name_or_pointer: &str) -> Result<T>;
+
+	/// Returns a reference of type `T` (or value for copy type) for a given name or pointer path.
+	/// Use this one over `x_get` to avoid string allocation, and get only the &str
+	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
+	fn x_get_as<'a, T: AsType<'a>>(&'a self, name_or_pointer: &str) -> Result<T>;
 
 	/// Takes the value at the specified name or pointer path and replaces it with `Null`.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
@@ -102,6 +108,18 @@ impl JsonValueExt for Value {
 
 		let value: T = serde_json::from_value(value.clone())?;
 		Ok(value)
+	}
+
+	fn x_get_as<'a, T: AsType<'a>>(&'a self, name_or_pointer: &str) -> Result<T> {
+		let value = if name_or_pointer.starts_with('/') {
+			self.pointer(name_or_pointer)
+				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
+		} else {
+			self.get(name_or_pointer)
+				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
+		};
+
+		T::from_value(value)
 	}
 
 	fn x_take<T: DeserializeOwned>(&mut self, name_or_pointer: &str) -> Result<T> {
@@ -217,12 +235,15 @@ pub enum JsonValueExtError {
 
 	PropertyNotFound(String),
 
+	// -- AsType errors
+	ValueNotType(&'static str),
+
 	#[from]
 	SerdeJson(serde_json::Error),
 }
 
 impl JsonValueExtError {
-	fn custom(val: impl std::fmt::Display) -> Self {
+	pub(crate) fn custom(val: impl std::fmt::Display) -> Self {
 		Self::Custom(val.to_string())
 	}
 }
