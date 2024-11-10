@@ -15,6 +15,14 @@ target/
 # !Cargo.lock # commented by default
 !.cargo/
 
+# -- Devai
+# To only allow the .devai/custom
+!.devai/
+.devai/*
+!.devai/custom/
+!.devai/custom/**
+!.devai/Config.toml
+
 # -- Safety net
 dist/
 out/

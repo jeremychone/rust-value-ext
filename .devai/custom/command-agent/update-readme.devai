@@ -1,0 +1,48 @@
+# Data 
+
+```rhai
+
+git::restore("README.md");
+
+// This is where we have the main Rust code for this simple crate
+let main_code = file::load("./src/json/json_value_ext.rs");
+
+// This will remove the function implementation and possible tests { ... }
+// Save money and avoid LLM noise
+let main_code = rust::prune_to_declarations(main_code.content);
+
+let readme_md = file::load("README.md");
+
+return #{
+    main_code: main_code,
+    readme_md: readme_md
+}
+
+```
+
+
+# Instruction
+
+Here is the main code of this library (function bodies were removed for brevity)
+
+```rust
+{{data.main_code}}
+```
+
+Here is the README.md
+
+```md
+{{data.readme_md.content}}
+```
+
+- Can you provide a new README that includes all of the new features while following the current README format?
+
+- Provide the README content exactly as is, without a preface and without wrapping it in a markdown code block.
+
+# Output 
+
+```rhai
+
+file::save("README.md", ai_output);
+
+```
