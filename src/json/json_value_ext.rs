@@ -12,7 +12,12 @@ use std::collections::VecDeque;
 ///
 /// # Provided Methods
 ///
-/// - **`x_get`**: Returns a value of a specified type `T` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get`**: Returns a value of a specified type `T` from a JSON object using either a direct name or a pointer path. (will do a new allocation)
+/// - **`x_get_as`**: Returns a reference of a specified type `T` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get_str`**: Returns a `&str` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get_i64`**: Returns an `i64` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get_f64`**: Returns an `f64` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get_bool`**: Returns a `bool` from a JSON object using either a direct name or a pointer path.
 /// - **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
 /// - **`x_insert`**: Inserts a value of type `T` into a JSON object at the specified name or pointer path, creating any missing objects along the way.
 /// - **`x_walk`**: Traverses all properties within the JSON value tree, applying a user-provided callback function on each property.
@@ -67,6 +72,26 @@ pub trait JsonValueExt {
 	/// Use this one over `x_get` to avoid string allocation, and get only the &str
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get_as<'a, T: AsType<'a>>(&'a self, name_or_pointer: &str) -> Result<T>;
+
+	/// Returns a &str if present (shortcut for `x_get_as::<&str>(...)`)
+	fn x_get_str(&self, name_or_pointer: &str) -> Result<&str> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a i64 if present (shortcut for `x_get_as::<i64>(...)`)
+	fn x_get_i64(&self, name_or_pointer: &str) -> Result<i64> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a f64 if present (shortcut for `x_get_as::<f64>(...)`)
+	fn x_get_f64(&self, name_or_pointer: &str) -> Result<f64> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a bool if present (shortcut for `x_get_as::<bool>(...)`)
+	fn x_get_bool(&self, name_or_pointer: &str) -> Result<bool> {
+		self.x_get_as(name_or_pointer)
+	}
 
 	/// Takes the value at the specified name or pointer path and replaces it with `Null`.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').

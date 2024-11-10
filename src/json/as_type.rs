@@ -11,6 +11,12 @@ impl<'a> AsType<'a> for &'a str {
 	}
 }
 
+impl AsType<'_> for f64 {
+	fn from_value(value: &Value) -> Result<Self, JsonValueExtError> {
+		value.as_f64().ok_or(JsonValueExtError::ValueNotType("f64"))
+	}
+}
+
 impl AsType<'_> for i64 {
 	fn from_value(value: &Value) -> Result<Self, JsonValueExtError> {
 		value.as_i64().ok_or(JsonValueExtError::ValueNotType("i64"))
