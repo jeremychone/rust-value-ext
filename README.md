@@ -1,6 +1,6 @@
 # Value Extension Traits
 
-Extension trait for working with JSON values in a more convenient way.
+An extension trait for working with JSON values in a more convenient way.
 `JsonValueExt` offers convenient methods for interacting with `serde_json::Value` objects,
 simplifying tasks like getting, taking, inserting, traversing, and pretty-printing JSON data
 while ensuring type safety with Serde's serialization and deserialization.
@@ -10,7 +10,7 @@ while ensuring type safety with Serde's serialization and deserialization.
 - **`x_get`**: Returns a value of a specified type `T` from a JSON object using either a direct name or a pointer path.
 - **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
 - **`x_insert`**: Inserts a value of type `T` into a JSON object at the specified name or pointer path, creating any missing objects along the way.
-- **`x_walk`**: Traverses all properties within the JSON value tree, applying a user-provided callback function on each property.
+- **`x_walk`**: Traverses all properties within the JSON value tree, applying a user-provided callback function to each property.
 - **`x_pretty`**: Returns a pretty-printed string representation of the JSON value.
 
 ## Usage
@@ -45,3 +45,4 @@ fn example_usage(json: &mut Value) -> Result<(), Box<dyn std::error::Error>> {
 
 This trait enhances the `serde_json::Value` API by adding more type-safe and convenient
 methods for manipulating JSON data in Rust.
+

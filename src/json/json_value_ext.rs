@@ -69,7 +69,7 @@ pub trait JsonValueExt {
 	fn x_get<T: DeserializeOwned>(&self, name_or_pointer: &str) -> Result<T>;
 
 	/// Returns a reference of type `T` (or value for copy type) for a given name or pointer path.
-	/// Use this one over `x_get` to avoid string allocation, and get only the &str
+	/// Use this one over `x_get` to avoid string allocation and get only the &str
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get_as<'a, T: AsType<'a>>(&'a self, name_or_pointer: &str) -> Result<T>;
 
@@ -78,12 +78,12 @@ pub trait JsonValueExt {
 		self.x_get_as(name_or_pointer)
 	}
 
-	/// Returns a i64 if present (shortcut for `x_get_as::<i64>(...)`)
+	/// Returns an i64 if present (shortcut for `x_get_as::<i64>(...)`)
 	fn x_get_i64(&self, name_or_pointer: &str) -> Result<i64> {
 		self.x_get_as(name_or_pointer)
 	}
 
-	/// Returns a f64 if present (shortcut for `x_get_as::<f64>(...)`)
+	/// Returns an f64 if present (shortcut for `x_get_as::<f64>(...)`)
 	fn x_get_f64(&self, name_or_pointer: &str) -> Result<f64> {
 		self.x_get_as(name_or_pointer)
 	}
@@ -171,7 +171,7 @@ impl JsonValueExt for Value {
 					map.insert(name_or_pointer.to_string(), new_value);
 					Ok(())
 				}
-				_ => Err(JsonValueExtError::custom("Value is not an Object, cannot x_insert")),
+				_ => Err(JsonValueExtError::custom("Value is not an Object; cannot x_insert")),
 			}
 		} else {
 			let parts: Vec<&str> = name_or_pointer.split('/').skip(1).collect();
@@ -239,7 +239,7 @@ impl JsonValueExt for Value {
 					}
 				}
 			} else if let Value::Array(arr) = current {
-				// If current value is an array, add its elements to the queue
+				// If the current value is an array, add its elements to the queue
 				for value in arr.iter_mut() {
 					if value.is_object() || value.is_array() {
 						queue.push_back(value);
