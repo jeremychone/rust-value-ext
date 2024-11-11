@@ -131,7 +131,18 @@ impl JsonValueExt for Value {
 				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
 		};
 
-		let value: T = serde_json::from_value(value.clone())?;
+		let value: T = serde_json::from_value(value.clone())
+			// first map_err to get the JsonValueExtError
+			.map_err(JsonValueExtError::from)
+			// and then, try to add more property information if possible
+			.map_err(|err| match err {
+				JsonValueExtError::ValueNotOfType(not_of_type) => JsonValueExtError::PropertyValueNotOfType {
+					name: name_or_pointer.to_string(),
+					not_of_type,
+				},
+				other => other,
+			})?;
+
 		Ok(value)
 	}
 
@@ -144,7 +155,14 @@ impl JsonValueExt for Value {
 				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
 		};
 
-		T::from_value(value)
+		// add more error context when possible
+		T::from_value(value).map_err(|err| match err {
+			JsonValueExtError::ValueNotOfType(not_of_type) => JsonValueExtError::PropertyValueNotOfType {
+				name: name_or_pointer.to_string(),
+				not_of_type,
+			},
+			other => other,
+		})
 	}
 
 	fn x_take<T: DeserializeOwned>(&mut self, name_or_pointer: &str) -> Result<T> {
@@ -260,8 +278,13 @@ pub enum JsonValueExtError {
 
 	PropertyNotFound(String),
 
+	PropertyValueNotOfType {
+		name: String,
+		not_of_type: &'static str,
+	},
+
 	// -- AsType errors
-	ValueNotType(&'static str),
+	ValueNotOfType(&'static str),
 
 	#[from]
 	SerdeJson(serde_json::Error),
