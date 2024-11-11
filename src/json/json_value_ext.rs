@@ -64,6 +64,8 @@ use std::collections::VecDeque;
 pub trait JsonValueExt {
 	fn x_new_object() -> Value;
 
+	fn x_contains<T: DeserializeOwned>(&self, name_or_pointer: &str) -> bool;
+
 	/// Returns an owned type `T` for a given name or pointer path.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get<T: DeserializeOwned>(&self, name_or_pointer: &str) -> Result<T>;
@@ -120,6 +122,14 @@ pub trait JsonValueExt {
 impl JsonValueExt for Value {
 	fn x_new_object() -> Value {
 		Value::Object(Map::new())
+	}
+
+	fn x_contains<T: DeserializeOwned>(&self, name_or_pointer: &str) -> bool {
+		if name_or_pointer.starts_with('/') {
+			self.pointer(name_or_pointer).is_some()
+		} else {
+			self.get(name_or_pointer).is_some()
+		}
 	}
 
 	fn x_get<T: DeserializeOwned>(&self, name_or_pointer: &str) -> Result<T> {
