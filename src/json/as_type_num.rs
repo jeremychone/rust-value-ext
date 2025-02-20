@@ -1,21 +1,6 @@
 use crate::JsonValueExtError;
+use crate::json::as_type_str::AsType;
 use serde_json::Value;
-
-pub trait AsType<'a>: Sized {
-	fn from_value(value: &'a Value) -> Result<Self, JsonValueExtError>;
-}
-
-impl<'a> AsType<'a> for &'a str {
-	fn from_value(value: &'a Value) -> Result<Self, JsonValueExtError> {
-		value.as_str().ok_or(JsonValueExtError::ValueNotOfType("str"))
-	}
-}
-
-impl<'a> AsType<'a> for Option<&'a str> {
-	fn from_value(value: &'a Value) -> Result<Self, JsonValueExtError> {
-		Ok(value.as_str())
-	}
-}
 
 impl AsType<'_> for f64 {
 	fn from_value(value: &Value) -> Result<Self, JsonValueExtError> {
@@ -80,11 +65,5 @@ impl AsType<'_> for bool {
 impl AsType<'_> for Option<bool> {
 	fn from_value(value: &Value) -> Result<Self, JsonValueExtError> {
 		Ok(value.as_bool())
-	}
-}
-
-impl<'a> AsType<'a> for &'a Vec<Value> {
-	fn from_value(value: &'a Value) -> Result<Self, JsonValueExtError> {
-		value.as_array().ok_or(JsonValueExtError::ValueNotOfType("Vec<Value>"))
 	}
 }
