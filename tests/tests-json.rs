@@ -1,7 +1,7 @@
 use serde_json::json;
 use value_ext::{AsType, JsonValueExt};
 
-type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
 fn test_value_insert_ok() -> Result<()> {
@@ -24,26 +24,26 @@ fn test_value_walk_ok() -> Result<()> {
 	// -- Setup & Fixtures
 	let mut root_value = json!(
 	{
-			"tokens": 3,
-			"schema": {
-				"type": "object",
-				"additionalProperties": false,
-				"properties": {
-					"all_models": {
-						"type": "array",
-						"items": {
-							"type": "object",
-							"additionalProperties": false,
-							"properties": {
-								"maker": { "type": "string" },
-								"model_name": { "type": "string" }
-							},
-							"required": ["maker", "model_name"]
-						}
+		"tokens": 3,
+		"schema": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"all_models": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"properties": {
+							"maker": { "type": "string" },
+							"model_name": { "type": "string" }
+						},
+						"required": ["maker", "model_name"]
 					}
-				},
-				"required": ["all_models"]
-			}
+				}
+			},
+			"required": ["all_models"]
+		}
 	});
 
 	// -- Exec
@@ -116,7 +116,8 @@ fn test_x_remove_direct() -> Result<()> {
 	// -- Check: The removed value should equal "direct_value"
 	assert_eq!(removed, "direct_value");
 	// Also, check that "key" is no longer in the object.
-	assert!(!value.as_object().unwrap().contains_key("key"));
+	let obj = value.as_object().ok_or("Expected object after removal")?;
+	assert!(!obj.contains_key("key"));
 	// "other" remains unchanged.
 	let other: i64 = value.x_get("other")?;
 	assert_eq!(other, 42);
@@ -146,8 +147,9 @@ fn test_x_remove_nested() -> Result<()> {
 	assert_eq!(d, "keep_this");
 
 	// And key "c" should be missing from "a/b"
-	let b = value.pointer("/a/b").unwrap();
-	assert!(!b.as_object().unwrap().contains_key("c"));
+	let b = value.pointer("/a/b").ok_or("Expected pointer /a/b not found")?;
+	let b_obj = b.as_object().ok_or("Expected object at /a/b")?;
+	assert!(!b_obj.contains_key("c"));
 
 	// Other parts of the object remain unchanged.
 	let direct_in_a: String = value.x_get("/a/e")?;

@@ -195,7 +195,9 @@ impl JsonValueExt for Value {
 					_ => return Err(JsonValueExtError::custom("Path does not point to an Object or Array")),
 				}
 			}
-			let last_part = parts.last().unwrap();
+			let last_part = parts
+				.last()
+				.ok_or_else(|| JsonValueExtError::custom("Last element not found"))?;
 			match current {
 				Value::Object(map) => {
 					let removed = map
