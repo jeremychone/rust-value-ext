@@ -1,5 +1,5 @@
 use serde_json::json;
-use value_ext::{JsonValueExt, AsType};
+use value_ext::{AsType, JsonValueExt};
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
@@ -47,30 +47,27 @@ fn test_value_walk_ok() -> Result<()> {
 	});
 
 	// -- Exec
-	// Will remove "additionalProperties" (only the frist one, because return false)
+	// Will remove "additionalProperties" (only the first one, because callback returns false)
 	root_value.x_walk(|parent_map, property_name| {
-		// --
 		if property_name == "type" {
-			let val = parent_map.get(property_name).and_then(|val| val.as_str());
+			let val = parent_map.get(property_name).and_then(|v| v.as_str());
 			if let Some("object") = val {
 				parent_map.remove("additionalProperties");
-				return false; // will stop early
+				return false; // stop early
 			}
 		}
 		true
 	});
 
 	// -- Check
-	// the number of "additionalProperties" left
 	let mut marker_count = 0;
-	// Will remove "additionalProperties"
 	root_value.x_walk(|_parent_map, property_name| {
 		if property_name == "additionalProperties" {
 			marker_count += 1;
 		}
 		true
 	});
-	assert_eq!(1, marker_count); // only 1 was removed, as callback returned false
+	assert_eq!(1, marker_count); // only one was removed
 
 	Ok(())
 }
@@ -82,10 +79,10 @@ fn test_as_type_for_vec() -> Result<()> {
 
 	// -- Exec: Use the AsType implementation for &Vec<Value>
 	let vec_ref: &Vec<serde_json::Value> = <&Vec<serde_json::Value>>::from_value(&json_array)?;
-	
+
 	// -- Check: Validate the length and content
 	assert_eq!(vec_ref.len(), 2);
-	
+
 	let first_obj = &vec_ref[0];
 	let a_val = first_obj
 		.get("a")
@@ -103,9 +100,61 @@ fn test_as_type_for_vec_str() -> Result<()> {
 
 	// -- Exec: Use the AsType implementation for Vec<&str>
 	let vec_str: Vec<&str> = <Vec<&str>>::from_value(&json_array)?;
-	
+
 	// -- Check: Validate the length and content
 	assert_eq!(vec_str, vec!["hello", "world"]);
+
+	Ok(())
+}
+
+#[test]
+fn test_x_remove_direct() -> Result<()> {
+	// -- Setup & Fixtures: Create a JSON object with a direct key.
+	let mut value = json!({"key": "direct_value", "other": 42});
+	// -- Exec: Remove the direct key using x_remove.
+	let removed: String = value.x_remove("key")?;
+	// -- Check: The removed value should equal "direct_value"
+	assert_eq!(removed, "direct_value");
+	// Also, check that "key" is no longer in the object.
+	assert!(!value.as_object().unwrap().contains_key("key"));
+	// "other" remains unchanged.
+	let other: i64 = value.x_get("other")?;
+	assert_eq!(other, 42);
+	Ok(())
+}
+
+#[test]
+fn test_x_remove_nested() -> Result<()> {
+	// -- Setup: Create a nested JSON object.
+	let mut value = json!({
+		"a": {
+			"b": {
+				"c": "nested_value",
+				"d": "keep_this"
+			},
+			"e": "direct_in_a"
+		},
+		"f": "outside"
+	});
+	// -- Exec: Remove the nested element "c" from "a/b"
+	let removed: String = value.x_remove("/a/b/c")?;
+	// -- Check: The removed value should equal "nested_value"
+	assert_eq!(removed, "nested_value");
+
+	// Now, "a/b" should still have key "d"
+	let d: String = value.x_get("/a/b/d")?;
+	assert_eq!(d, "keep_this");
+
+	// And key "c" should be missing from "a/b"
+	let b = value.pointer("/a/b").unwrap();
+	assert!(!b.as_object().unwrap().contains_key("c"));
+
+	// Other parts of the object remain unchanged.
+	let direct_in_a: String = value.x_get("/a/e")?;
+	assert_eq!(direct_in_a, "direct_in_a");
+
+	let outside: String = value.x_get("f")?;
+	assert_eq!(outside, "outside");
 
 	Ok(())
 }

@@ -12,67 +12,31 @@ use std::collections::VecDeque;
 ///
 /// # Provided Methods
 ///
-/// - **`x_get`**: Returns a value of a specified type `T` from a JSON object using either a direct name or a pointer path. (will do a new allocation)
+/// - **`x_get`**: Returns an owned value of a specified type `T` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_as`**: Returns a reference of a specified type `T` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_str`**: Returns a `&str` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_i64`**: Returns an `i64` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_f64`**: Returns an `f64` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_bool`**: Returns a `bool` from a JSON object using either a direct name or a pointer path.
 /// - **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
-/// - **`x_insert`**: Inserts a value of type `T` into a JSON object at the specified name or pointer path, creating any missing objects along the way.
-/// - **`x_walk`**: Traverses all properties within the JSON value tree, applying a user-provided callback function on each property.
+/// - **`x_remove`**: Removes the value at the specified name or pointer path from the JSON object and returns it,
+///                 leaving no placeholder in the object (unlike `x_take`).
+/// - **`x_insert`**: Inserts a new value of type `T` into a JSON object at the specified name or pointer path,
+///                   creating any missing objects along the way.
+/// - **`x_walk`**: Traverses all properties in the JSON value tree and calls the callback function on each.
 /// - **`x_pretty`**: Returns a pretty-printed string representation of the JSON value.
-///
-/// # Usage
-///
-/// This trait is intended to be used with `serde_json::Value` objects. It is particularly
-/// useful when you need to manipulate JSON structures dynamically or when the structure
-/// of the JSON is not known at compile time.
-///
-/// ```rust
-/// use serde_json::{Value, Map};
-/// use serde::de::DeserializeOwned;
-/// use serde::Serialize;
-/// use your_crate::JsonValueExt;
-///
-/// fn example_usage(json: &mut Value) -> Result<(), Box<dyn std::error::Error>> {
-///     // Get a value from JSON
-///     let name: String = json.x_get("/name")?;
-///
-///     // Take a value from JSON, replacing it with `Null`
-///     let age: u32 = json.x_take("age")?;
-///
-///     // Insert a new value into JSON
-///     json.x_insert("city", "New York")?;
-///
-///     // Walk through the JSON properties
-///     json.x_walk(|parent_map, property_name| {
-///         println!("Property: {}", property_name);
-///         true // Continue traversal
-///     });
-///
-///     // Get a pretty-printed JSON string
-///     let pretty_json = json.x_pretty()?;
-///     println!("{}", pretty_json);
-///
-///     Ok(())
-/// }
-/// ```
-///
-/// This trait enhances the `serde_json::Value` API by adding more type-safe and convenient
-/// methods for manipulating JSON data in Rust.
 pub trait JsonValueExt {
 	fn x_new_object() -> Value;
 
 	fn x_contains<T: DeserializeOwned>(&self, name_or_pointer: &str) -> bool;
 
 	/// Returns an owned type `T` for a given name or pointer path.
-	/// Note: This will create a clone of the match Value.
+	/// Note: This will create a clone of the matched Value.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get<T: DeserializeOwned>(&self, name_or_pointer: &str) -> Result<T>;
 
-	/// Returns a reference of type `T` (or value for copy type) for a given name or pointer path.
-	/// Use this one over `x_get` to avoid string allocation and get only the &str
+	/// Returns a reference of type `T` (or a copy for copy types) for a given name or pointer path.
+	/// Use this one over `x_get` to avoid string allocation.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get_as<'a, T: AsType<'a>>(&'a self, name_or_pointer: &str) -> Result<T>;
 
@@ -100,6 +64,10 @@ pub trait JsonValueExt {
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_take<T: DeserializeOwned>(&mut self, name_or_pointer: &str) -> Result<T>;
 
+	/// Removes the value at the specified name or pointer path from the JSON object
+	/// and returns it without leaving a placeholder, unlike `x_take`.
+	fn x_remove<T: DeserializeOwned>(&mut self, name_or_pointer: &str) -> Result<T>;
+
 	/// Inserts a new value of type `T` at the specified name or pointer path.
 	/// This method creates missing `Value::Object` entries as needed.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
@@ -111,7 +79,7 @@ pub trait JsonValueExt {
 	///
 	/// Returns:
 	/// - `true` if the traversal completes without stopping early.
-	/// - `false` if the traversal is stopped early because the callback returned `false`.
+	/// - `false` if the traversal was stopped early because the callback returned `false`.
 	fn x_walk<F>(&mut self, callback: F) -> bool
 	where
 		F: FnMut(&mut Map<String, Value>, &str) -> bool;
@@ -142,17 +110,16 @@ impl JsonValueExt for Value {
 				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
 		};
 
-		let value: T = serde_json::from_value(value.clone())
-			// first map_err to get the JsonValueExtError
-			.map_err(JsonValueExtError::from)
-			// and then, try to add more property information if possible
-			.map_err(|err| match err {
-				JsonValueExtError::ValueNotOfType(not_of_type) => JsonValueExtError::PropertyValueNotOfType {
-					name: name_or_pointer.to_string(),
-					not_of_type,
-				},
-				other => other,
-			})?;
+		let value: T =
+			serde_json::from_value(value.clone())
+				.map_err(JsonValueExtError::from)
+				.map_err(|err| match err {
+					JsonValueExtError::ValueNotOfType(not_of_type) => JsonValueExtError::PropertyValueNotOfType {
+						name: name_or_pointer.to_string(),
+						not_of_type,
+					},
+					other => other,
+				})?;
 
 		Ok(value)
 	}
@@ -166,7 +133,6 @@ impl JsonValueExt for Value {
 				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
 		};
 
-		// add more error context when possible
 		T::from_value(value).map_err(|err| match err {
 			JsonValueExtError::ValueNotOfType(not_of_type) => JsonValueExtError::PropertyValueNotOfType {
 				name: name_or_pointer.to_string(),
@@ -189,6 +155,48 @@ impl JsonValueExt for Value {
 
 		let value: T = serde_json::from_value(value)?;
 		Ok(value)
+	}
+
+	fn x_remove<T: DeserializeOwned>(&mut self, name_or_pointer: &str) -> Result<T> {
+		if !name_or_pointer.starts_with('/') {
+			match self {
+				Value::Object(map) => {
+					let removed = map
+						.remove(name_or_pointer)
+						.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?;
+					let value: T = serde_json::from_value(removed)?;
+					Ok(value)
+				}
+				_ => Err(JsonValueExtError::custom("Value is not an Object; cannot x_remove")),
+			}
+		} else {
+			let parts: Vec<&str> = name_or_pointer.split('/').skip(1).collect();
+			if parts.is_empty() {
+				return Err(JsonValueExtError::custom("Invalid path"));
+			}
+			let last_key = parts.last().unwrap();
+			let mut current = self;
+			for &part in &parts[..parts.len() - 1] {
+				match current {
+					Value::Object(map) => {
+						current = map
+							.get_mut(part)
+							.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?;
+					}
+					_ => return Err(JsonValueExtError::custom("Path does not point to an Object")),
+				}
+			}
+			match current {
+				Value::Object(map) => {
+					let removed = map
+						.remove(*last_key)
+						.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?;
+					let value: T = serde_json::from_value(removed)?;
+					Ok(value)
+				}
+				_ => Err(JsonValueExtError::custom("Path does not point to an Object")),
+			}
+		}
 	}
 
 	fn x_insert<T: Serialize>(&mut self, name_or_pointer: &str, value: T) -> Result<()> {

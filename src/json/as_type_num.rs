@@ -1,5 +1,5 @@
-use crate::JsonValueExtError;
 use crate::json::as_type_str::AsType;
+use crate::JsonValueExtError;
 use serde_json::Value;
 
 impl AsType<'_> for f64 {
