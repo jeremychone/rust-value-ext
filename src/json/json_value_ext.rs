@@ -174,7 +174,6 @@ impl JsonValueExt for Value {
 			if parts.is_empty() {
 				return Err(JsonValueExtError::custom("Invalid path"));
 			}
-			let last_key = parts.last().unwrap();
 			let mut current = self;
 			for &part in &parts[..parts.len() - 1] {
 				match current {
@@ -183,18 +182,41 @@ impl JsonValueExt for Value {
 							.get_mut(part)
 							.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?;
 					}
-					_ => return Err(JsonValueExtError::custom("Path does not point to an Object")),
+					Value::Array(arr) => {
+						let index: usize = part
+							.parse()
+							.map_err(|_| JsonValueExtError::custom("Invalid array index in pointer"))?;
+						if index < arr.len() {
+							current = &mut arr[index];
+						} else {
+							return Err(JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()));
+						}
+					}
+					_ => return Err(JsonValueExtError::custom("Path does not point to an Object or Array")),
 				}
 			}
+			let last_part = parts.last().unwrap();
 			match current {
 				Value::Object(map) => {
 					let removed = map
-						.remove(*last_key)
+						.remove(*last_part)
 						.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?;
 					let value: T = serde_json::from_value(removed)?;
 					Ok(value)
 				}
-				_ => Err(JsonValueExtError::custom("Path does not point to an Object")),
+				Value::Array(arr) => {
+					let index: usize = last_part
+						.parse()
+						.map_err(|_| JsonValueExtError::custom("Invalid array index in pointer"))?;
+					if index < arr.len() {
+						let removed = arr.remove(index);
+						let value: T = serde_json::from_value(removed)?;
+						Ok(value)
+					} else {
+						Err(JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))
+					}
+				}
+				_ => Err(JsonValueExtError::custom("Path does not point to an Object or Array")),
 			}
 		}
 	}
