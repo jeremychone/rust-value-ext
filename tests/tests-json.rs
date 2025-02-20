@@ -1,5 +1,5 @@
 use serde_json::json;
-use value_ext::JsonValueExt;
+use value_ext::{JsonValueExt, AsType};
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
@@ -71,6 +71,27 @@ fn test_value_walk_ok() -> Result<()> {
 		true
 	});
 	assert_eq!(1, marker_count); // only 1 was removed, as callback returned false
+
+	Ok(())
+}
+
+#[test]
+fn test_as_type_for_vec() -> Result<()> {
+	// -- Setup & Fixtures: Create a JSON array
+	let json_array = json!([ {"a": 1}, {"b": 2} ]);
+
+	// -- Exec: Use the AsType implementation for &Vec<Value>
+	let vec_ref: &Vec<serde_json::Value> = <&Vec<serde_json::Value>>::from_value(&json_array)?;
+	
+	// -- Check: Validate the length and content
+	assert_eq!(vec_ref.len(), 2);
+	
+	let first_obj = &vec_ref[0];
+	let a_val = first_obj
+		.get("a")
+		.and_then(|v| v.as_i64())
+		.ok_or("Missing 'a' in first element")?;
+	assert_eq!(a_val, 1);
 
 	Ok(())
 }

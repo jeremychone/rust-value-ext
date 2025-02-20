@@ -82,3 +82,9 @@ impl AsType<'_> for Option<bool> {
 		Ok(value.as_bool())
 	}
 }
+
+impl<'a> AsType<'a> for &'a Vec<Value> {
+	fn from_value(value: &'a Value) -> Result<Self, JsonValueExtError> {
+		value.as_array().ok_or(JsonValueExtError::ValueNotOfType("Vec<Value>"))
+	}
+}
