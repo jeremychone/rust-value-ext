@@ -95,3 +95,17 @@ fn test_as_type_for_vec() -> Result<()> {
 
 	Ok(())
 }
+
+#[test]
+fn test_as_type_for_vec_str() -> Result<()> {
+	// -- Setup & Fixtures: Create a JSON array of strings
+	let json_array = json!(["hello", "world"]);
+
+	// -- Exec: Use the AsType implementation for Vec<&str>
+	let vec_str: Vec<&str> = <Vec<&str>>::from_value(&json_array)?;
+	
+	// -- Check: Validate the length and content
+	assert_eq!(vec_str, vec!["hello", "world"]);
+
+	Ok(())
+}

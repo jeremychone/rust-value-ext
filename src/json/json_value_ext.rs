@@ -67,6 +67,7 @@ pub trait JsonValueExt {
 	fn x_contains<T: DeserializeOwned>(&self, name_or_pointer: &str) -> bool;
 
 	/// Returns an owned type `T` for a given name or pointer path.
+	/// Note: This will create a clone of the match Value.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_get<T: DeserializeOwned>(&self, name_or_pointer: &str) -> Result<T>;
 
