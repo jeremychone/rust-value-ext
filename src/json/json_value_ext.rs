@@ -20,9 +20,9 @@ use std::collections::VecDeque;
 /// - **`x_get_bool`**: Returns a `bool` from a JSON object using either a direct name or a pointer path.
 /// - **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
 /// - **`x_remove`**: Removes the value at the specified name or pointer path from the JSON object and returns it,
-///                 leaving no placeholder in the object (unlike `x_take`).
+///   leaving no placeholder in the object (unlike `x_take`).
 /// - **`x_insert`**: Inserts a new value of type `T` into a JSON object at the specified name or pointer path,
-///                   creating any missing objects along the way.
+///   creating any missing objects along the way.
 /// - **`x_walk`**: Traverses all properties in the JSON value tree and calls the callback function on each.
 /// - **`x_pretty`**: Returns a pretty-printed string representation of the JSON value.
 pub trait JsonValueExt {
