@@ -1,56 +1,65 @@
 # Value Extension Traits
 
-An extension trait for working with JSON values in a more convenient way. `JsonValueExt` offers convenient methods for interacting with `serde_json::Value` objects, simplifying tasks like getting, taking, inserting, traversing, and pretty-printing JSON data while ensuring type safety with Serde's serialization and deserialization.
+[LLM API Reference](doc/for-llm/api-reference-for-llm.md)
 
-## Provided Methods
+`value-ext` is a Rust crate that provides the `JsonValueExt` extension trait for `serde_json::Value`. It offers a more ergonomic and type-safe way to interact with JSON data, simplifying common tasks like getting, taking, inserting, and traversing JSON structures using direct keys or JSON Pointer paths.
 
-- **`x_new_object`**: Creates a new `Value::Object`.
-- **`x_get`**: Returns a value of a specified type `T` from a JSON object using either a direct name or a pointer path.
-- **`x_get_as`**: Returns a reference of a specified type `T` from a JSON object using either a direct name or a pointer path, avoiding allocations for types that implement `AsType`.
-- **`x_get_str`**: Returns a `&str` from a JSON object using either a direct name or a pointer path.
-- **`x_get_i64`**: Returns an `i64` from a JSON object using either a direct name or a pointer path.
-- **`x_get_f64`**: Returns an `f64` from a JSON object using either a direct name or a pointer path.
-- **`x_get_bool`**: Returns a `bool` from a JSON object using either a direct name or a pointer path.
-- **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
-- **`x_insert`**: Inserts a value of type `T` into a JSON object at the specified name or pointer path, creating any missing objects along the way.
-- **`x_walk`**: Traverses all properties within the JSON value tree, applying a user-provided callback function to each property.
-- **`x_pretty`**: Returns a pretty-printed string representation of the JSON value.
+## Methods Overview
+
+- **`x_get<T>`**: Returns an owned value of type `T`.
+- **`x_get_as<T>`**: Returns a reference or copy (via `AsType`) to avoid unnecessary allocations.
+- **`x_get_str`, `x_get_i64`, `x_get_f64`, `x_get_bool`**: Type-specific shortcuts for `x_get_as`.
+- **`x_insert`**: Inserts a value at a path, creating parent objects if necessary.
+- **`x_take`**: Replaces the value at a path with `Null` and returns the original.
+- **`x_remove`**: Removes the property entirely and returns the value.
+- **`x_merge`**: Performs a shallow merge of another JSON object.
+- **`x_walk`**: Traverses the JSON tree with a callback `(parent_map, key) -> bool`.
+- **`x_pretty`**: Returns a formatted JSON string.
+
+This trait enhances the `serde_json::Value` API by providing a more fluid interface for dynamic JSON manipulation in Rust.
+
+## Key Features
+
+- **Ergonomic Getters**: Retrieve values as owned types (`x_get`) or zero-copy references (`x_get_as`, `x_get_str`, etc.).
+- **Pointer Support**: Use standard JSON Pointers (e.g., `/path/to/value`) or direct property names.
+- **Mutations**: Easily insert (`x_insert`), take (`x_take`), or remove (`x_remove`) values.
+- **Deep Traversal**: Walk through the entire JSON tree with `x_walk`.
+- **Pretty Printing**: Convenient `x_pretty` method for debugging and logging.
 
 ## Usage
 
-This trait is intended to be used with `serde_json::Value` objects. It is particularly useful when you need to manipulate JSON structures dynamically or when the structure of the JSON is not known at compile time.
+Add `value-ext` to your `Cargo.toml` and import the trait.
 
 ```rust
-use serde_json::{Value, Map};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use your_crate::JsonValueExt;
+use serde_json::{json, Value};
+use value_ext::JsonValueExt;
 
-fn example_usage(json: &mut Value) -> Result<(), Box<dyn std::error::Error>> {
-    // Create a new object
-    let new_object = Value::x_new_object();
-    
-    // Get a value from JSON
-    let name: String = json.x_get("/name")?;
-
-    // Take a value from JSON, replacing it with `Null`
-    let age: u32 = json.x_take("age")?;
-
-    // Insert a new value into JSON
-    json.x_insert("city", "New York")?;
-
-    // Walk through the JSON properties
-    json.x_walk(|parent_map, property_name| {
-        println!("Property: {}", property_name);
-        true // Continue traversal
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut data = json!({
+        "project": "value-ext",
+        "settings": {
+            "retries": 3
+        }
     });
 
-    // Get a pretty-printed JSON string
-    let pretty_json = json.x_pretty()?;
-    println!("{}", pretty_json);
+    // Get a value using a JSON Pointer
+    let retries: i64 = data.x_get("/settings/retries")?;
+    assert_eq!(retries, 3);
+
+    // Get a string reference (zero-copy)
+    let name = data.x_get_str("project")?;
+    assert_eq!(name, "value-ext");
+
+    // Insert a new nested value (creates parents if missing)
+    data.x_insert("/settings/timeout", 30)?;
+
+    // Remove a value and return it
+    let project: String = data.x_remove("project")?;
+
+    // Pretty print
+    println!("{}", data.x_pretty()?);
 
     Ok(())
 }
 ```
 
-This trait enhances the `serde_json::Value` API by adding more type-safe and convenient methods for manipulating JSON data in Rust.
