@@ -73,6 +73,12 @@ pub trait JsonValueExt {
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
 	fn x_insert<T: Serialize>(&mut self, name_or_pointer: &str, value: T) -> Result<()>;
 
+	/// Merges another JSON object into this one (shallow merge).
+	/// - If `self` is not an Object, returns error.
+	/// - If `other` is Null, does nothing.
+	/// - If `other` is not an Object, returns error.
+	fn x_merge(&mut self, other: Value) -> Result<()>;
+
 	/// Walks through all properties in the JSON value tree and calls the callback function on each.
 	/// - The callback signature is `(parent_map, property_name) -> bool`.
 	///   - Returns `false` to stop the traversal; returns `true` to continue.
@@ -260,6 +266,25 @@ impl JsonValueExt for Value {
 			} else {
 				Err(JsonValueExtError::custom("Invalid path"))
 			}
+		}
+	}
+
+	fn x_merge(&mut self, other: Value) -> Result<()> {
+		if other.is_null() {
+			return Ok(());
+		}
+
+		let other_map = match other {
+			Value::Object(map) => map,
+			_ => return Err(JsonValueExtError::custom("Other value is not an Object; cannot x_merge")),
+		};
+
+		match self {
+			Value::Object(map) => {
+				map.extend(other_map);
+				Ok(())
+			}
+			_ => Err(JsonValueExtError::custom("Value is not an Object; cannot x_merge")),
 		}
 	}
 

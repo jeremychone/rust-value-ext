@@ -160,3 +160,24 @@ fn test_x_remove_nested() -> Result<()> {
 
 	Ok(())
 }
+
+#[test]
+fn test_x_merge_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let mut value = json!({"a": 1, "b": 2});
+	let other = json!({"b": 3, "c": 4});
+
+	// -- Exec
+	value.x_merge(other)?;
+
+	// -- Check
+	assert_eq!(value["a"], 1);
+	assert_eq!(value["b"], 3);
+	assert_eq!(value["c"], 4);
+
+	// -- Test Null (should do nothing)
+	value.x_merge(serde_json::Value::Null)?;
+	assert_eq!(value["b"], 3);
+
+	Ok(())
+}
