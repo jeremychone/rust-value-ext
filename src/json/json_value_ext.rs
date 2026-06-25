@@ -1,7 +1,7 @@
 use crate::AsType;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde_json::{json, Map, Value};
+use serde::de::DeserializeOwned;
+use serde_json::{Map, Value, json};
 use std::collections::VecDeque;
 
 /// Extension trait for working with JSON values in a more convenient way.
@@ -18,6 +18,7 @@ use std::collections::VecDeque;
 /// - **`x_get_i64`**: Returns an `i64` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_f64`**: Returns an `f64` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_bool`**: Returns a `bool` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get_object`**: Returns a reference to the object map at the specified name or pointer path.
 /// - **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
 /// - **`x_remove`**: Removes the value at the specified name or pointer path from the JSON object and returns it,
 ///   leaving no placeholder in the object (unlike `x_take`).
@@ -59,6 +60,10 @@ pub trait JsonValueExt {
 	fn x_get_bool(&self, name_or_pointer: &str) -> Result<bool> {
 		self.x_get_as(name_or_pointer)
 	}
+
+	/// Returns a reference to the object map at the given name or pointer path.
+	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
+	fn x_get_object(&self, name_or_pointer: &str) -> Result<&serde_json::Map<String, Value>>;
 
 	/// Takes the value at the specified name or pointer path and replaces it with `Null`.
 	/// - `name_or_pointer`: Can be a direct name or a pointer path (if it starts with '/').
@@ -128,6 +133,21 @@ impl JsonValueExt for Value {
 				})?;
 
 		Ok(value)
+	}
+
+	fn x_get_object(&self, name_or_pointer: &str) -> Result<&serde_json::Map<String, Value>> {
+		let value = if name_or_pointer.starts_with('/') {
+			self.pointer(name_or_pointer)
+				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
+		} else {
+			self.get(name_or_pointer)
+				.ok_or_else(|| JsonValueExtError::PropertyNotFound(name_or_pointer.to_string()))?
+		};
+
+		value.as_object().ok_or_else(|| JsonValueExtError::PropertyValueNotOfType {
+			name: name_or_pointer.to_string(),
+			not_of_type: "Object",
+		})
 	}
 
 	fn x_get_as<'a, T: AsType<'a>>(&'a self, name_or_pointer: &str) -> Result<T> {
@@ -276,7 +296,11 @@ impl JsonValueExt for Value {
 
 		let other_map = match other {
 			Value::Object(map) => map,
-			_ => return Err(JsonValueExtError::custom("Other value is not an Object; cannot x_merge")),
+			_ => {
+				return Err(JsonValueExtError::custom(
+					"Other value is not an Object; cannot x_merge",
+				));
+			}
 		};
 
 		match self {

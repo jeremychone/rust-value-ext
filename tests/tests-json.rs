@@ -181,3 +181,33 @@ fn test_x_merge_ok() -> Result<()> {
 
 	Ok(())
 }
+
+#[test]
+fn test_x_get_object_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"data": {"inner": "value"}});
+	// -- Exec
+	let map = value.x_get_object("data")?;
+	// -- Check
+	assert_eq!(map.len(), 1);
+	assert_eq!(map.get("inner").and_then(|v| v.as_str()), Some("value"));
+	Ok(())
+}
+
+#[test]
+fn test_x_get_object_not_object() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"key": "string_value"});
+	// -- Exec
+	let res = value.x_get_object("key");
+	// -- Check
+	assert!(res.is_err());
+	match res.unwrap_err() {
+		value_ext::JsonValueExtError::PropertyValueNotOfType { name, not_of_type } => {
+			assert_eq!(name, "key");
+			assert_eq!(not_of_type, "Object");
+		}
+		_ => panic!("Expected PropertyValueNotOfType"),
+	}
+	Ok(())
+}
