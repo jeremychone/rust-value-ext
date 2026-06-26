@@ -70,17 +70,17 @@ pub trait JsonValueExt {
 		self.x_get_as(name_or_pointer)
 	}
 
-	/// Returns a Vec<i64> if present (shortcut for `x_get_as::<Vec<i64>>(...)`)
+	/// Returns a `Vec<i64>` if present (shortcut for `x_get_as::<Vec<i64>>(...)`)
 	fn x_get_i64s(&self, name_or_pointer: &str) -> Result<Vec<i64>> {
 		self.x_get_as(name_or_pointer)
 	}
 
-	/// Returns a Vec<f64> if present (shortcut for `x_get_as::<Vec<f64>>(...)`)
+	/// Returns a `Vec<f64>` if present (shortcut for `x_get_as::<Vec<f64>>(...)`)
 	fn x_get_f64s(&self, name_or_pointer: &str) -> Result<Vec<f64>> {
 		self.x_get_as(name_or_pointer)
 	}
 
-	/// Returns a Vec<bool> if present (shortcut for `x_get_as::<Vec<bool>>(...)`)
+	/// Returns a `Vec<bool>` if present (shortcut for `x_get_as::<Vec<bool>>(...)`)
 	fn x_get_bools(&self, name_or_pointer: &str) -> Result<Vec<bool>> {
 		self.x_get_as(name_or_pointer)
 	}
