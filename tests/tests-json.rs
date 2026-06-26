@@ -211,3 +211,58 @@ fn test_x_get_object_not_object() -> Result<()> {
 	}
 	Ok(())
 }
+
+#[test]
+fn test_x_get_strs_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"strings": ["hello", "world"]});
+	// -- Exec
+	let strs: Vec<&str> = value.x_get_strs("strings")?;
+	// -- Check
+	assert_eq!(strs, vec!["hello", "world"]);
+	Ok(())
+}
+
+#[test]
+fn test_x_get_i64s_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"nums": [1, 2, 3]});
+	// -- Exec
+	let nums: Vec<i64> = value.x_get_i64s("nums")?;
+	// -- Check
+	assert_eq!(nums, vec![1, 2, 3]);
+	Ok(())
+}
+
+#[test]
+fn test_x_get_f64s_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"nums": [1.1, 2.2]});
+	// -- Exec
+	let nums: Vec<f64> = value.x_get_f64s("nums")?;
+	// -- Check
+	assert_eq!(nums, vec![1.1, 2.2]);
+	Ok(())
+}
+
+#[test]
+fn test_x_get_bools_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"bools": [true, false, true]});
+	// -- Exec
+	let bools: Vec<bool> = value.x_get_bools("bools")?;
+	// -- Check
+	assert_eq!(bools, vec![true, false, true]);
+	Ok(())
+}
+
+#[test]
+fn test_x_get_strs_pointer_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let value = json!({"outer": {"inner": ["hello"]}});
+	// -- Exec
+	let strs: Vec<&str> = value.x_get_strs("/outer/inner")?;
+	// -- Check
+	assert_eq!(strs, vec!["hello"]);
+	Ok(())
+}

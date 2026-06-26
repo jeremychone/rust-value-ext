@@ -19,6 +19,10 @@ Implemented for `serde_json::Value`. Methods taking `name_or_pointer` accept a d
 - `x_get_i64(&self, name_or_pointer: &str) -> Result<i64>`: Shortcut for `x_get_as::<i64>`.
 - `x_get_f64(&self, name_or_pointer: &str) -> Result<f64>`: Shortcut for `x_get_as::<f64>`.
 - `x_get_bool(&self, name_or_pointer: &str) -> Result<bool>`: Shortcut for `x_get_as::<bool>`.
+- `x_get_strs(&self, name_or_pointer: &str) -> Result<Vec<&str>>`: Shortcut for `x_get_as::<Vec<&str>>`.
+- `x_get_i64s(&self, name_or_pointer: &str) -> Result<Vec<i64>>`: Shortcut for `x_get_as::<Vec<i64>>`.
+- `x_get_f64s(&self, name_or_pointer: &str) -> Result<Vec<f64>>`: Shortcut for `x_get_as::<Vec<f64>>`.
+- `x_get_bools(&self, name_or_pointer: &str) -> Result<Vec<bool>>`: Shortcut for `x_get_as::<Vec<bool>>`.
 - `x_get_object(&self, name_or_pointer: &str) -> Result<&serde_json::Map<String, Value>>`: Returns reference to the Object map at the specified path. Fails with `PropertyNotFound` if path not found, or `PropertyValueNotOfType ("Object")` if the value at path is not an object.
 
 ### Mutations
@@ -41,7 +45,10 @@ Used with `x_get_as`:
 - `u32`, `Option<u32>`
 - `bool`, `Option<bool>`
 - `&Vec<Value>`: References the internal array.
-- `Vec<&str>`: Collection of references to internal strings.
+ - `Vec<&str>`: Collection of &str values.
+ - `Vec<i64>`: Collection of i64 values.
+ - `Vec<f64>`: Collection of f64 values.
+ - `Vec<bool>`: Collection of bool values.
 
 ## Errors (JsonValueExtError)
 

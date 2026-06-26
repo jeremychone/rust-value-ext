@@ -18,6 +18,10 @@ use std::collections::VecDeque;
 /// - **`x_get_i64`**: Returns an `i64` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_f64`**: Returns an `f64` from a JSON object using either a direct name or a pointer path.
 /// - **`x_get_bool`**: Returns a `bool` from a JSON object using either a direct name or a pointer path.
+/// - **`x_get_strs`**: Returns a `Vec<&str>` from a JSON array using either a direct name or a pointer path.
+/// - **`x_get_i64s`**: Returns a `Vec<i64>` from a JSON array using either a direct name or a pointer path.
+/// - **`x_get_f64s`**: Returns a `Vec<f64>` from a JSON array using either a direct name or a pointer path.
+/// - **`x_get_bools`**: Returns a `Vec<bool>` from a JSON array using either a direct name or a pointer path.
 /// - **`x_get_object`**: Returns a reference to the object map at the specified name or pointer path.
 /// - **`x_take`**: Takes a value from a JSON object using a specified name or pointer path, replacing it with `Null`.
 /// - **`x_remove`**: Removes the value at the specified name or pointer path from the JSON object and returns it,
@@ -58,6 +62,26 @@ pub trait JsonValueExt {
 
 	/// Returns a bool if present (shortcut for `x_get_as::<bool>(...)`)
 	fn x_get_bool(&self, name_or_pointer: &str) -> Result<bool> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a Vec<&str> if present (shortcut for `x_get_as::<Vec<&str>>(...)`)
+	fn x_get_strs(&self, name_or_pointer: &str) -> Result<Vec<&str>> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a Vec<i64> if present (shortcut for `x_get_as::<Vec<i64>>(...)`)
+	fn x_get_i64s(&self, name_or_pointer: &str) -> Result<Vec<i64>> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a Vec<f64> if present (shortcut for `x_get_as::<Vec<f64>>(...)`)
+	fn x_get_f64s(&self, name_or_pointer: &str) -> Result<Vec<f64>> {
+		self.x_get_as(name_or_pointer)
+	}
+
+	/// Returns a Vec<bool> if present (shortcut for `x_get_as::<Vec<bool>>(...)`)
+	fn x_get_bools(&self, name_or_pointer: &str) -> Result<Vec<bool>> {
 		self.x_get_as(name_or_pointer)
 	}
 
