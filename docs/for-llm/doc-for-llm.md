@@ -45,10 +45,10 @@ Used with `x_get_as`:
 - `u32`, `Option<u32>`
 - `bool`, `Option<bool>`
 - `&Vec<Value>`: References the internal array.
- - `Vec<&str>`: Collection of &str values.
- - `Vec<i64>`: Collection of i64 values.
- - `Vec<f64>`: Collection of f64 values.
- - `Vec<bool>`: Collection of bool values.
+- `Vec<&str>`: Collection of &str values.
+- `Vec<i64>`: Collection of i64 values.
+- `Vec<f64>`: Collection of f64 values.
+- `Vec<bool>`: Collection of bool values.
 
 ## Errors (JsonValueExtError)
 
