@@ -1,6 +1,6 @@
 [package]
 name = "value-ext"
-version = "0.1.5"
+version = "0.1.6-WIP"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Jeremy Chone <jeremy.chone@gmail.com>"]
